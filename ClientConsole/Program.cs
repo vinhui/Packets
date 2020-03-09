@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using NLog;
 using NLog.Config;
@@ -17,12 +18,23 @@ namespace ClientConsole
             config.AddRuleForAllLevels(consoleTarget);
             LogManager.Configuration = config;
 
-            LogManager.GetLogger("Main").Info("Starting client");
+            var logger = LogManager.GetLogger("Main");
+            logger.Info("Starting client");
+            var fileTransfer = new FileTransfer();
 
             var factory = new PacketsFactory();
+            factory.RegisterPacket<ChunkedDataPacket>();
 
-            var client = new Client(IPAddress.Parse("127.0.0.1"), 50505, factory);
+            var server = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 50505);
+            var client = new Client(server, factory);
+            client.PacketReceived += (sender, packet) => fileTransfer.OnPacketReceived(server, packet);
             client.Start();
+            Console.ReadLine();
+            using (var fileStream = new FileStream("img.jpg", FileMode.Open))
+            {
+                fileTransfer.SendFile(fileStream, client.Send);
+            }
+
             Console.ReadLine();
             client.Stop();
         }
