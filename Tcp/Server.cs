@@ -161,6 +161,8 @@ namespace Tcp
             clients[index].Ping = -1;
             clients[index].Tcp?.Close();
             clients[index].Tcp = null;
+
+            Logger.Info("Client {client} on slot {slot} disconnected", client.EndPoint, index);
         }
 
         private async Task Send(byte[] bytes, ServerClient client)
