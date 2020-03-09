@@ -13,7 +13,7 @@ namespace Tcp
     {
         private static readonly Logger Logger = LogManager.GetLogger("TcpClient");
         private readonly IPAddress serverIp;
-        private readonly ushort serverPort;
+        private readonly int serverPort;
         private readonly PacketsFactory packetsFactory;
 
         private readonly TcpClient tcpClient;
@@ -23,7 +23,12 @@ namespace Tcp
 
         public event EventHandler<IPacket> PacketReceived;
 
-        public Client(IPAddress serverIp, ushort serverPort, PacketsFactory packetsFactory)
+        public Client(IPEndPoint endPoint, PacketsFactory packetsFactory)
+            : this(endPoint.Address, endPoint.Port, packetsFactory)
+        {
+        }
+
+        public Client(IPAddress serverIp, int serverPort, PacketsFactory packetsFactory)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;
