@@ -106,8 +106,17 @@ namespace Tcp
             }
 
             Logger.Debug("Sending packet to server: {packet}", packet);
-            var bytes = packet.Serialize();
-            stream.Write(bytes, 0, bytes.Length);
+            try
+            {
+                var bytes = packet.Serialize();
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to send packet to the server");
+                Logger.Error(ex);
+            }
         }
     }
 }

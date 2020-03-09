@@ -169,6 +169,7 @@ namespace Tcp
             {
                 var stream = client.Stream;
                 await stream.WriteAsync(bytes, 0, bytes.Length);
+                await stream.FlushAsync();
             }
             catch (Exception ex)
             {
