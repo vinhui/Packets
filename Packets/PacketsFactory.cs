@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Packets
@@ -30,19 +30,39 @@ namespace Packets
             return false;
         }
 
-        public IEnumerable<IPacket> GetPackets(byte[] bytes, int start, int count)
+        public PacketCollection GetPackets(byte[] bytes, int start, int count)
         {
+            var collection = new PacketCollection();
             while (start < count)
             {
                 if (TryGetPacket(bytes, start, count, out var used, out var packet))
                 {
+                    collection.Packets.Add(packet);
                     start += used;
-                    yield return packet;
                 }
                 else
                 {
-                    yield break;
+                    break;
                 }
+            }
+
+            collection.BytesUsed = start;
+            return collection;
+        }
+
+        public class PacketCollection : IEnumerable<IPacket>
+        {
+            internal readonly List<IPacket> Packets = new List<IPacket>();
+            public int BytesUsed;
+
+            public IEnumerator<IPacket> GetEnumerator()
+            {
+                return Packets.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return Packets.GetEnumerator();
             }
         }
     }
