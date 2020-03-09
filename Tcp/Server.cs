@@ -133,17 +133,28 @@ namespace Tcp
 
             try
             {
-                var buffer = new byte[1024];
+                var buffer = new byte[512];
+                var bufferOffset = 0;
                 while (client.IsConnected)
                 {
                     if (client.Tcp?.Available >= 0)
                     {
-                        var read = client.Stream.Read(buffer, 0, buffer.Length);
-                        foreach (var packet in packetsFactory.GetPackets(buffer, 0, read))
+                        var read = client.Stream.Read(buffer, bufferOffset, buffer.Length - bufferOffset);
+                        var packetCollection = packetsFactory.GetPackets(buffer, 0, read + bufferOffset);
+                        foreach (var packet in packetCollection)
                         {
                             Logger.Debug("Received packet from {client}: {packet}", client.EndPoint, packet);
                             PacketReceived?.Invoke(this, new PacketReceivedArgs(packet, client));
                         }
+
+                        var leftover = read + bufferOffset - packetCollection.BytesUsed;
+                        if (leftover > 0)
+                        {
+                            Array.Copy(buffer, packetCollection.BytesUsed, buffer, 0, leftover);
+                            bufferOffset = leftover;
+                        }
+                        else
+                            bufferOffset = 0;
                     }
                     else
                     {
