@@ -77,11 +77,6 @@ namespace Packets
 
         public void SendFile(FileStream file, Action<IPacket> sendPacket)
         {
-            if (!file.CanSeek)
-            {
-                throw new ArgumentException("The stream is not seekable", nameof(file));
-            }
-
             if (file.Length > uint.MaxValue)
             {
                 throw new ArgumentException("The stream is larger than 4294967295 bytes", nameof(file));
