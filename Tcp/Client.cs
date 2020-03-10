@@ -21,9 +21,13 @@ namespace Tcp
 
         private Thread listenThread;
 
+        public EventHandler FailedToConnect;
+        public EventHandler Disconnected;
+
         public event EventHandler<IPacket> PacketReceived;
 
         public int RxBufferSize { get; set; } = 1024;
+
         public Client(IPEndPoint endPoint, PacketsFactory packetsFactory)
             : this(endPoint.Address, endPoint.Port, packetsFactory)
         {
@@ -64,6 +68,7 @@ namespace Tcp
             {
                 Logger.Error("Failed to connect");
                 Logger.Error(ex);
+                FailedToConnect?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -106,11 +111,24 @@ namespace Tcp
                         Thread.Sleep(TimeSpan.FromTicks(100));
                     }
                 }
+
+                stream = null;
+                if (tcpClient != null && tcpClient.Connected)
+                    tcpClient.Close();
+                Disconnected?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
                 Logger.Error("Got an exceptions while listening to the server");
                 Logger.Error(ex);
+                Logger.Warn("Disconnecting");
+                stream?.Close();
+                stream = null;
+                if (tcpClient != null && tcpClient.Connected)
+                {
+                    tcpClient.Close();
+                    Disconnected?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
 
