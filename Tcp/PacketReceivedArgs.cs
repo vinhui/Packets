@@ -4,8 +4,15 @@ namespace Tcp
 {
     public class PacketReceivedArgs
     {
-        public IPacket Packet;
-        public ServerClient Client;
+        /// <summary>
+        /// The packet that was received
+        /// </summary>
+        public readonly IPacket Packet;
+
+        /// <summary>
+        /// The client from whom it came
+        /// </summary>
+        public readonly ServerClient Client;
 
         public PacketReceivedArgs(IPacket packet, ServerClient client)
         {

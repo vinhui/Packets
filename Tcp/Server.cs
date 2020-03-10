@@ -43,6 +43,7 @@ namespace Tcp
         /// <summary>
         /// Buffer size in bytes for receiving packets
         /// </summary>
+        /// <remarks>Make sure packets will fit in this buffer in their entirety</remarks>
         /// <remarks>This is a buffer that is per client, thus having <see cref="MaxClients"/> connections would result in this value x32 of memory used</remarks>
         public int RxBufferSize { get; set; } = 1024;
 

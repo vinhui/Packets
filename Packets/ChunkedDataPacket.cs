@@ -2,6 +2,9 @@ using System;
 
 namespace Packets
 {
+    /// <summary>
+    /// Packet that is part of a collection of chunks
+    /// </summary>
     public class ChunkedDataPacket : IPacket
     {
         private static readonly byte[] Header =
@@ -17,10 +20,30 @@ namespace Packets
             (byte) '1',
         };
 
+        /// <summary>
+        /// Unique id that is the same across the collection
+        /// </summary>
         public ulong UniqueId;
+
+        /// <summary>
+        /// The offset of this section of data
+        /// </summary>
         public uint Offset;
+
+        /// <summary>
+        /// The total amount of chunks in the collection
+        /// </summary>
         public uint TotalChunks;
+
+        /// <summary>
+        /// The data of this chunk
+        /// </summary>
         public byte[] Data;
+
+        /// <summary>
+        /// The amount of bytes in this data collection
+        /// Make sure this is never longer than <see cref="Data"/>
+        /// </summary>
         public int DataLength;
 
         public byte[] Serialize()
@@ -84,7 +107,7 @@ namespace Packets
                 Data = new byte[Data?.Length ?? 0],
                 DataLength = DataLength
             };
-            if (Data != null) 
+            if (Data != null)
                 Array.Copy(Data, packet.Data, Data.Length);
             return packet;
         }

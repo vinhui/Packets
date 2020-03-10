@@ -7,16 +7,32 @@ using NLog;
 
 namespace Packets
 {
+    /// <summary>
+    /// Helper class that makes it easier to send and receive files.
+    /// This makes heavy use of the <see cref="ChunkedDataPacket"/> and can be a good example of how to use those packets.
+    /// </summary>
     public class FileTransfer
     {
         private static readonly Logger Logger = LogManager.GetLogger(nameof(FileTransfer));
 
+        /// <summary>
+        /// Local register so that we have a unique id each time we send a new file
+        /// </summary>
         private static ulong _id;
 
+        /// <summary>
+        /// The size in bytes for each chunk of data
+        /// </summary>
+        /// <remarks>Make sure that the entire packet will fit in the receiving buffers of the client and/or server (the one that will be receiving this packet).
+        /// This includes the header etc of the <see cref="ChunkedDataPacket"/>.</remarks>
         public ushort ChunkSize = 64;
 
         private readonly List<ReceivingFileProcess> receivingFiles = new List<ReceivingFileProcess>();
 
+        /// <summary>
+        /// Fired when a new files was received with the stream to the received file.
+        /// </summary>
+        /// <remarks>This stream should also be disposed by an event listener</remarks>
         public event EventHandler<FileStream> FileReceived;
 
         private class ReceivingFileProcess
@@ -34,6 +50,13 @@ namespace Packets
             }
         }
 
+        /// <summary>
+        /// Bind this event to the server or client so that it can process incoming packets, otherwise this class is useless
+        /// </summary>
+        /// <example>client.PacketReceived += (sender, packet) => fileTransfer.OnPacketReceived(server, packet);</example>
+        /// <example>server.PacketReceived += (sender, packetArgs) => fileTransfer.OnPacketReceived(packetArgs.Client.EndPoint, packetArgs.Packet);</example>
+        /// <param name="endPoint">The endpoint from which we received the packet. This is mostly used server side to prevent id clashes.</param>
+        /// <param name="packet">The packet that was received</param>
         public void OnPacketReceived(EndPoint endPoint, IPacket packet)
         {
             if (!(packet is ChunkedDataPacket p))
@@ -75,6 +98,13 @@ namespace Packets
             return new FileStream(Path.GetTempFileName(), FileMode.OpenOrCreate);
         }
 
+        /// <summary>
+        /// Send a new file
+        /// </summary>
+        /// <param name="file">The file to send</param>
+        /// <param name="sendPacket">The method that will actually send generated packets.</param>
+        /// <example>fileTransfer.SendFile(fileStream, client.Send);</example>
+        /// <exception cref="ArgumentException">Thrown if the <paramref name="file"/> is too large (<see cref="uint.MaxValue"/> bytes)</exception>
         public void SendFile(FileStream file, Action<IPacket> sendPacket)
         {
             if (file.Length > uint.MaxValue)

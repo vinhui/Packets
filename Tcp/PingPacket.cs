@@ -17,10 +17,17 @@ namespace Tcp
             (byte) 'g',
         };
 
+        /// <summary>
+        /// The UTC time at which it was sent before bouncing
+        /// </summary>
         public DateTime SendTime;
+
+        /// <summary>
+        /// Did the packet sent and back
+        /// </summary>
         public bool didBounce;
 
-        private int Size => Header.Length + 8 + 1;
+        private static int Size => Header.Length + 8 + 1;
 
         public byte[] Serialize()
         {

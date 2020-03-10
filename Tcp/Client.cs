@@ -21,11 +21,25 @@ namespace Tcp
 
         private Thread listenThread;
 
+        /// <summary>
+        /// Fires when it failed to connect to the server
+        /// </summary>
         public event EventHandler FailedToConnect;
+
+        /// <summary>
+        /// Fires if we got disconnected from the server
+        /// </summary>
         public event EventHandler Disconnected;
 
+        /// <summary>
+        /// Fired when a packet was received
+        /// </summary>
         public event EventHandler<IPacket> PacketReceived;
 
+        /// <summary>
+        /// Buffer size in bytes for receiving packets
+        /// </summary>
+        /// <remarks>Make sure packets will fit in this buffer in their entirety</remarks>
         public int RxBufferSize { get; set; } = 1024;
 
         public Client(IPEndPoint endPoint, PacketsFactory packetsFactory)
