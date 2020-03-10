@@ -56,7 +56,16 @@ namespace Packets
             if (f.ReceivedChunks == p.TotalChunks)
             {
                 Logger.Info("Received all file chunks");
-                FileReceived?.Invoke(this, f.Stream);
+                f.Stream.Position = 0;
+                if (FileReceived != null && FileReceived.GetInvocationList().Length > 0)
+                {
+                    FileReceived.Invoke(this, f.Stream);
+                }
+                else
+                {
+                    f.Stream.Close();
+                }
+
                 receivingFiles.RemoveAll(x => x.UniqueId == p.UniqueId && x.EndPoint == endPoint);
             }
         }
