@@ -6,12 +6,12 @@ namespace Tcp
 {
     public class ServerClient
     {
-        public TcpClient Tcp;
-        public bool IsListening;
+        internal TcpClient Tcp;
+        public bool IsListening { get; internal set; }
         public bool IsConnected => Tcp?.Connected ?? false;
-        public int Ping;
+        public int Ping { get; internal set; }
 
-        public EndPoint EndPoint;
+        public EndPoint EndPoint { get; internal set; }
 
         internal Stream Stream;
 
