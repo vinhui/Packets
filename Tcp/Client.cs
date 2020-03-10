@@ -21,8 +21,8 @@ namespace Tcp
 
         private Thread listenThread;
 
-        public EventHandler FailedToConnect;
-        public EventHandler Disconnected;
+        public event EventHandler FailedToConnect;
+        public event EventHandler Disconnected;
 
         public event EventHandler<IPacket> PacketReceived;
 
