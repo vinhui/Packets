@@ -17,6 +17,11 @@ namespace Tcp
         private ServerClient[] clients;
 
         /// <summary>
+        /// Get all the connected clients
+        /// </summary>
+        public IEnumerable<ServerClient> ConnectedClients => clients.Where(x => x.IsConnected);
+
+        /// <summary>
         /// The maximum allowed clients to connect to this server
         /// </summary>
         public uint MaxClients { get; }
