@@ -69,19 +69,22 @@ namespace Tcp
             connectionsThread = new Thread(WaitForConnections);
             connectionsThread.Start();
 
-            pingThread = new Thread(async () =>
+            if (PingIntervalMs > 0)
             {
-                while (listener.Server.IsBound)
+                pingThread = new Thread(async () =>
                 {
-                    Thread.Sleep(PingIntervalMs);
-                    if (clients.Any(x => x.IsConnected))
+                    while (listener.Server.IsBound)
                     {
-                        Logger.Debug("Sending ping to all connected clients");
-                        await SendToAll(new PingPacket {SendTime = DateTime.UtcNow});
+                        Thread.Sleep(PingIntervalMs);
+                        if (clients.Any(x => x.IsConnected))
+                        {
+                            Logger.Debug("Sending ping to all connected clients");
+                            await SendToAllAsync(new PingPacket {SendTime = DateTime.UtcNow});
+                        }
                     }
-                }
-            });
-            pingThread.Start();
+                });
+                pingThread.Start();
+            }
         }
 
         private void WaitForConnections()
