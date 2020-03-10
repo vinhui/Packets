@@ -23,6 +23,7 @@ namespace Tcp
 
         public event EventHandler<IPacket> PacketReceived;
 
+        public int RxBufferSize { get; set; } = 1024;
         public Client(IPEndPoint endPoint, PacketsFactory packetsFactory)
             : this(endPoint.Address, endPoint.Port, packetsFactory)
         {
@@ -77,7 +78,7 @@ namespace Tcp
             Logger.Debug("Starting with listening");
             try
             {
-                var buffer = new byte[512];
+                var buffer = new byte[RxBufferSize];
                 var bufferOffset = 0;
                 while (tcpClient?.Connected ?? false)
                 {

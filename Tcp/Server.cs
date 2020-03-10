@@ -25,6 +25,7 @@ namespace Tcp
         public int PingIntervalMs { get; set; } = 5000;
         private Thread pingThread;
 
+        public int RxBufferSize { get; set; } = 1024;
         private bool IsRunning => isListening && (listener?.Server?.IsBound ?? false);
 
         public event EventHandler<PacketReceivedArgs> PacketReceived;
@@ -133,7 +134,7 @@ namespace Tcp
 
             try
             {
-                var buffer = new byte[512];
+                var buffer = new byte[RxBufferSize];
                 var bufferOffset = 0;
                 while (client.IsConnected)
                 {
