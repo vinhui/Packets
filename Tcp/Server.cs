@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -81,7 +82,7 @@ namespace Tcp
                 else
                 {
                     packet.didBounce = true;
-                    await Send(packet, args.Client);
+                    await SendAsync(packet, args.Client);
                 }
             };
         }
@@ -215,34 +216,78 @@ namespace Tcp
             Logger.Info("Client {client} on slot {slot} disconnected", client.EndPoint, index);
         }
 
-        private async Task Send(byte[] bytes, ServerClient client)
+        private async Task<bool> SendAsync(byte[] bytes, ServerClient client)
         {
             try
             {
                 var stream = client.Stream;
                 await stream.WriteAsync(bytes, 0, bytes.Length);
                 await stream.FlushAsync();
+                return true;
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to send packet to {client}", client.EndPoint);
                 Logger.Error(ex);
+                return false;
             }
         }
 
-        private Task Send(IPacket packet, ServerClient client)
+        /// <summary>
+        /// Send a packet to a specific client
+        /// </summary>
+        /// <param name="packet">Packet to send</param>
+        /// <param name="client">Client to send the packet to</param>
+        /// <returns>Returns a task that completes when the packet is sent with true if successful</returns>
+        public Task<bool> SendAsync(IPacket packet, ServerClient client)
         {
             if (!IsRunning)
             {
                 Logger.Warn("The server is not running, not sending packet");
-                return Task.CompletedTask;
+                return Task.FromResult(false);
             }
 
             Logger.Debug("Sending packet to {client}: ", client.EndPoint, packet);
-            return Send(packet.Serialize(), client);
+            return SendAsync(packet.Serialize(), client);
         }
 
-        private async Task SendToAll(IPacket packet)
+        /// <summary>
+        /// Send a packet to all the connected clients
+        /// </summary>
+        /// <param name="packet">Packet to send to everyone</param>
+        /// <returns>Returns a task that you can wait on with a dictionary containing success per client</returns>
+        /// <remarks>This uses more memory/processing than the very similar <see cref="SendToAllAsync"/>. Use that if you don't care about the results</remarks>
+        public async Task<Dictionary<ServerClient, bool>> SendToAllWithResultAsync(IPacket packet)
+        {
+            if (!IsRunning)
+            {
+                Logger.Warn("The server is not running, not sending packet");
+                return null;
+            }
+
+            var bytes = packet.Serialize();
+            var connectedClients1 = ConnectedClients.ToArray();
+            var tasks = new Task<bool>[connectedClients1.Length];
+            for (var i = 0; i < connectedClients1.Length; i++)
+            {
+                Logger.Debug("Sending packet to {client}: {packet}", clients[i].EndPoint, packet);
+                tasks[i] = SendAsync(bytes, clients[i]);
+            }
+
+            var connectedClients = connectedClients1;
+
+            var result = await Task.WhenAll(tasks);
+            return connectedClients
+                .Zip(result, (k, v) => new {k, v})
+                .ToDictionary(x => x.k, x => x.v);
+        }
+
+        /// <summary>
+        /// Send a packet to all the connected clients
+        /// </summary>
+        /// <param name="packet">Packet to send to everyone</param>
+        /// <returns>Returns a task that completes when the package is sent to all</returns>
+        public async Task SendToAllAsync(IPacket packet)
         {
             if (!IsRunning)
             {
@@ -251,17 +296,17 @@ namespace Tcp
             }
 
             var bytes = packet.Serialize();
-            var tasks = new Task[clients.Length];
+            var tasks = new Task<bool>[clients.Length];
             for (var i = 0; i < clients.Length; i++)
             {
                 if (!clients[i].IsConnected)
                 {
-                    tasks[i] = Task.CompletedTask;
-                    continue;
+                    tasks[i] = Task.FromResult(true);
+                    break;
                 }
 
                 Logger.Debug("Sending packet to {client}: {packet}", clients[i].EndPoint, packet);
-                tasks[i] = Send(bytes, clients[i]);
+                tasks[i] = SendAsync(bytes, clients[i]);
             }
 
             await Task.WhenAll(tasks);
