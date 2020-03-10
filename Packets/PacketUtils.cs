@@ -25,8 +25,7 @@ namespace Packets
             if (header.Length > bytes.Length - start)
                 throw new ArgumentException("Header does not fit in bytes", nameof(header));
 
-            for (var i = 0; i < header.Length; i++)
-                bytes[i + start] = header[i];
+            Array.Copy(header, 0, bytes, start, header.Length);
         }
 
         public static void WriteString(byte[] bytes, int start, string text)
