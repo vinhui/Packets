@@ -15,6 +15,10 @@ namespace Tcp
 
         private TcpListener listener;
         private ServerClient[] clients;
+
+        /// <summary>
+        /// The maximum allowed clients to connect to this server
+        /// </summary>
         public uint MaxClients { get; }
 
         private Thread connectionsThread;
@@ -22,14 +26,34 @@ namespace Tcp
         private Thread[] listenThreads;
         private PacketsFactory packetsFactory;
 
+        /// <summary>
+        /// Interval at which to send a ping to all the clients
+        /// Set to lower than 1 to disable sending pings
+        /// </summary>
         public int PingIntervalMs { get; set; } = 5000;
+
         private Thread pingThread;
 
+        /// <summary>
+        /// Buffer size in bytes for receiving packets
+        /// </summary>
+        /// <remarks>This is a buffer that is per client, thus having <see cref="MaxClients"/> connections would result in this value x32 of memory used</remarks>
         public int RxBufferSize { get; set; } = 1024;
+
         private bool IsRunning => isListening && (listener?.Server?.IsBound ?? false);
 
+        /// <summary>
+        /// Fired whenever a packet was received
+        /// </summary>
         public event EventHandler<PacketReceivedArgs> PacketReceived;
 
+        /// <summary>
+        /// Initialize a new server instance
+        /// </summary>
+        /// <param name="bindIp">IP to bind to, easiest is <see cref="IPAddress.Any"/></param>
+        /// <param name="port">The port to bind to</param>
+        /// <param name="maxClients">The maximum amount of clients that are allowed to connect</param>
+        /// <param name="packetsFactory">The factory responsible for parsing received data</param>
         public Server(IPAddress bindIp, ushort port, uint maxClients, PacketsFactory packetsFactory)
         {
             listener = new TcpListener(bindIp, port);
@@ -57,6 +81,9 @@ namespace Tcp
             };
         }
 
+        /// <summary>
+        /// Actually start the server
+        /// </summary>
         public void Start()
         {
             Logger.Info("Starting server");
@@ -123,6 +150,9 @@ namespace Tcp
             }
         }
 
+        /// <summary>
+        /// Stop the running server
+        /// </summary>
         public void Stop()
         {
             Logger.Info("Stopping");
