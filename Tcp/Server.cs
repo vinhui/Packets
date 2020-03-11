@@ -165,7 +165,7 @@ namespace Tcp
             Logger.Info("Stopping");
             Logger.Debug("Disconnecting all clients");
             foreach (var c in clients)
-                c.Stream.Close();
+                c.Stream?.Close();
 
             listener.Stop();
             isListening = false;
