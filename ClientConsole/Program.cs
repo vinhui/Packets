@@ -28,6 +28,8 @@ namespace ClientConsole
             var server = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 50505);
             var client = new Client(server, factory);
             client.PacketReceived += (sender, packet) => fileTransfer.OnPacketReceived(server, packet);
+            client.FailedToConnect += (sender, eventArgs) => client.Start();
+            client.Disconnected += (sender, eventArgs) => client.Start();
             client.Start();
             Console.ReadLine();
             using (var fileStream = new FileStream("img.jpg", FileMode.Open))
