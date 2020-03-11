@@ -114,7 +114,7 @@ namespace Tcp
 
                 if (PingIntervalMs > 0)
                 {
-                    pingThread = new Thread(async () =>
+                    pingThread = new Thread(() =>
                     {
                         while (tcpClient?.Connected ?? false)
                         {
