@@ -254,7 +254,7 @@ namespace Tcp
                 return Task.FromResult(false);
             }
 
-            Logger.Debug("Sending packet to {client}: ", client.EndPoint, packet);
+            Logger.Debug("Sending packet to {client}: {packet}", client.EndPoint, packet);
             return SendAsync(packet.Serialize(), client);
         }
 
