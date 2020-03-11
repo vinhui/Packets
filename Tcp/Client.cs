@@ -20,6 +20,7 @@ namespace Tcp
         private Stream stream;
 
         private Thread listenThread;
+        private Thread pingThread;
 
         /// <summary>
         /// Fires when it failed to connect to the server
@@ -42,11 +43,33 @@ namespace Tcp
         /// <remarks>Make sure packets will fit in this buffer in their entirety</remarks>
         public int RxBufferSize { get; set; } = 1024;
 
+        /// <summary>
+        /// Ping time to the server in ms
+        /// </summary>
+        public int Ping { get; private set; } = -1;
+
+        /// <summary>
+        /// Interval at which to send a ping to the server
+        /// Set to lower than 1 to disable sending pings
+        /// </summary>
+        public int PingIntervalMs { get; set; } = 5000;
+
+        /// <summary>
+        /// Initialize a new connection with the given server
+        /// </summary>
+        /// <param name="endPoint">Server to connect to</param>
+        /// <param name="packetsFactory">The factory responsible for parsing received data</param>
         public Client(IPEndPoint endPoint, PacketsFactory packetsFactory)
             : this(endPoint.Address, endPoint.Port, packetsFactory)
         {
         }
 
+        /// <summary>
+        /// Initialize a new connection with the given server
+        /// </summary>
+        /// <param name="serverIp">IP of the server to connect to</param>
+        /// <param name="serverPort">Port that the server is bound to</param>
+        /// <param name="packetsFactory">The factory responsible for parsing received data</param>
         public Client(IPAddress serverIp, int serverPort, PacketsFactory packetsFactory)
         {
             this.serverIp = serverIp;
@@ -55,16 +78,27 @@ namespace Tcp
             this.packetsFactory = packetsFactory;
             tcpClient = new TcpClient();
 
-            PacketReceived += (sender, packet) =>
+            PacketReceived += (sender, args) =>
             {
-                if (!(packet is PingPacket p)) return;
-                if (p.didBounce) return;
-
-                p.didBounce = true;
-                Send(p);
+                if (!(args is PingPacket packet)) return;
+                if (packet.didBounce)
+                {
+                    var diff = DateTime.UtcNow - packet.SendTime;
+                    Ping = (int) diff.TotalMilliseconds;
+                    Logger.Debug("Ping to server: {ping}ms", Ping);
+                }
+                else
+                {
+                    packet.didBounce = true;
+                    Send(packet);
+                }
             };
         }
 
+        /// <summary>
+        /// Start connecting to the server
+        /// </summary>
+        /// <returns>Returns a task that you can wait on</returns>
         public async Task Start()
         {
             Logger.Info("Starting clients");
@@ -77,6 +111,21 @@ namespace Tcp
 
                 listenThread = new Thread(StartListening);
                 listenThread.Start();
+
+                if (PingIntervalMs > 0)
+                {
+                    pingThread = new Thread(async () =>
+                    {
+                        while (tcpClient?.Connected ?? false)
+                        {
+                            Logger.Debug("Sending ping to all connected clients");
+                            Send(new PingPacket {SendTime = DateTime.UtcNow});
+
+                            Thread.Sleep(PingIntervalMs);
+                        }
+                    });
+                    pingThread.Start();
+                }
             }
             catch (Exception ex)
             {
@@ -86,9 +135,13 @@ namespace Tcp
             }
         }
 
+        /// <summary>
+        /// Stop the connection with the server
+        /// </summary>
         public void Stop()
         {
             Logger.Info("Stopping");
+            stream?.Close();
             tcpClient.Close();
         }
 
@@ -146,6 +199,11 @@ namespace Tcp
             }
         }
 
+        /// <summary>
+        /// Send a packet to the server
+        /// </summary>
+        /// <param name="packet">Packet to send</param>
+        /// <remarks>The send method is not async on purpose because we don't want to get sent packets mangled</remarks>
         public void Send(IPacket packet)
         {
             if (tcpClient == null || !tcpClient.Connected)

@@ -244,6 +244,8 @@ namespace Tcp
         /// <param name="packet">Packet to send</param>
         /// <param name="client">Client to send the packet to</param>
         /// <returns>Returns a task that completes when the packet is sent with true if successful</returns>
+        /// <remarks>Even though this method is async, be sure this method is not called in parallel.
+        /// Otherwise you can get mangled packets.</remarks>
         public Task<bool> SendAsync(IPacket packet, ServerClient client)
         {
             if (!IsRunning)
@@ -262,6 +264,8 @@ namespace Tcp
         /// <param name="packet">Packet to send to everyone</param>
         /// <returns>Returns a task that you can wait on with a dictionary containing success per client</returns>
         /// <remarks>This uses more memory/processing than the very similar <see cref="SendToAllAsync"/>. Use that if you don't care about the results</remarks>
+        /// <remarks>Even though this method is async, be sure this method is not called in parallel.
+        /// Otherwise you can get mangled packets.</remarks>
         public async Task<Dictionary<ServerClient, bool>> SendToAllWithResultAsync(IPacket packet)
         {
             if (!IsRunning)
@@ -292,6 +296,8 @@ namespace Tcp
         /// </summary>
         /// <param name="packet">Packet to send to everyone</param>
         /// <returns>Returns a task that completes when the package is sent to all</returns>
+        /// <remarks>Even though this method is async, be sure this method is not called in parallel.
+        /// Otherwise you can get mangled packets.</remarks>
         public async Task SendToAllAsync(IPacket packet)
         {
             if (!IsRunning)
