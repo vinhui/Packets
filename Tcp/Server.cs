@@ -313,7 +313,7 @@ namespace Tcp
                 if (!clients[i].IsConnected)
                 {
                     tasks[i] = Task.FromResult(true);
-                    break;
+                    continue;
                 }
 
                 Logger.Debug("Sending packet to {client}: {packet}", clients[i].EndPoint, packet);
