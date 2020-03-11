@@ -118,7 +118,7 @@ namespace Tcp
                     {
                         while (tcpClient?.Connected ?? false)
                         {
-                            Logger.Debug("Sending ping to all connected clients");
+                            Logger.Debug("Sending ping to server");
                             Send(new PingPacket {SendTime = DateTime.UtcNow});
 
                             Thread.Sleep(PingIntervalMs);
