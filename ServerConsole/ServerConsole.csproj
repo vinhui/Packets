@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Extra\Extra.csproj" />
       <ProjectReference Include="..\Packets\Packets.csproj" />
       <ProjectReference Include="..\Tcp\Tcp.csproj" />
     </ItemGroup>
